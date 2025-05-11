@@ -1,33 +1,35 @@
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
-import requests
+from typing import List
 
 app = FastAPI()
 
 class Message(BaseModel):
     message: str
 
+class Conversation(BaseModel):
+    messages: List[Message]
+
+conversation_history = []  # To store conversation history
+
 @app.post('/chat')
 async def chat(message: Message):
-    # Here you would integrate with LiteLLM or any other LLM
+    conversation_history.append(message)  # Add user message to history
     response = call_llm(message.message)  # Call to LLM function
-    return {'response': response}
+    conversation_history.append(Message(message=response))  # Add LLM response to history
+    return {'response': response, 'conversation': conversation_history}
 
 @app.post('/upload-text/')
 async def upload_text(file: UploadFile = File(...)):
     contents = await file.read()
-    # Process the text file contents
     return {'filename': file.filename, 'content': contents.decode('utf-8')}
 
 @app.post('/upload-image/')
 async def upload_image(file: UploadFile = File(...)):
     contents = await file.read()
-    # Process the image file contents
     return {'filename': file.filename, 'size': len(contents)}
 
 def call_llm(user_input):
-    # Placeholder function to simulate LLM call
-    # You would replace this with actual API call to LiteLLM
     return f'You said: {user_input}'
 
 if __name__ == '__main__':
