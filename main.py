@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 
 app = FastAPI()
 
@@ -15,9 +15,11 @@ conversation_history = []  # To store conversation history
 @app.post('/chat')
 async def chat(message: Message):
     conversation_history.append(message)  # Add user message to history
-    response = call_llm(message.message)  # Call to LLM function
-    conversation_history.append(Message(message=response))  # Add LLM response to history
-    return {'response': response, 'conversation': conversation_history}
+    response1 = call_llm(message.message, 'model1')  # Call to LLM model 1
+    response2 = call_llm(message.message, 'model2')  # Call to LLM model 2
+    conversation_history.append(Message(message=response1))  # Add LLM response to history
+    conversation_history.append(Message(message=response2))  # Add LLM response to history
+    return {'responses': {'model1': response1, 'model2': response2}, 'conversation': conversation_history}
 
 @app.post('/upload-text/')
 async def upload_text(file: UploadFile = File(...)):
@@ -29,8 +31,9 @@ async def upload_image(file: UploadFile = File(...)):
     contents = await file.read()
     return {'filename': file.filename, 'size': len(contents)}
 
-def call_llm(user_input):
-    return f'You said: {user_input}'
+def call_llm(user_input: str, model: str) -> str:
+    # Placeholder function to simulate LLM call
+    return f'[{model}] You said: {user_input}'
 
 if __name__ == '__main__':
     import uvicorn
